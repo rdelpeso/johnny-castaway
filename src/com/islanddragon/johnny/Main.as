@@ -170,17 +170,31 @@ package com.islanddragon.johnny {
 				}
 				elapsedTime.reset();
 				elapsedTime.start();
-
-				return;
-				if (johnny_step > 5 + 6) {
-					johnny_step = 6;
+				animateJohnny();
+			}
+		}
+		
+		protected function animateJohnny() {
+			var speed:Number = 2;
+			if (johnny_step <= 5 || johnny_step > 11) {
+				 if (johnny_step > 11) {
+					johnny_step = 0;
 				}
 				if (johnny === null) {
 					johnny = new Bitmap(ss.drawTile(johnny_step));
 					addChild(johnny);
-				} else {
-					johnny.bitmapData = ss.drawTile(johnny_step);
+					johnny.x += 290;
+					johnny.y += 200;
 				}
+				johnny.bitmapData = ss.drawTile(johnny_step);
+				johnny.x += speed;
+				johnny.y -= speed;
+				johnny_step++;
+			} else if (johnny_step <= 11) {
+				var step:int = johnny_step - 6;
+					johnny.bitmapData = ss.drawTile(johnny_step);
+					johnny.x -= speed;
+					johnny.y += speed;
 				johnny_step++;
 			}
 		}
