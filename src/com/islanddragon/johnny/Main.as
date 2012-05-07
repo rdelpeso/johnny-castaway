@@ -1,4 +1,6 @@
 package com.islanddragon.johnny {
+	import flash.display.BitmapData;
+	import flash.display.Stage;
 	import flash.display.DisplayObject;
 	import flash.display.Loader;
 	import flash.display.LoaderInfo;
@@ -12,6 +14,8 @@ package com.islanddragon.johnny {
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
 	import org.as3commons.zip.*;
+	import com.islanddragon.johnny.FPSCounter;
+	import com.bensilvis.spriteSheet.SpriteSheet;
 
 	/**
 	 * ...
@@ -39,12 +43,17 @@ package com.islanddragon.johnny {
 			, 'palm_coco'
 			, 'palm_front'
 		);
+
 		protected var loaded_items:String = "";
 		protected var display_txt:TextField;
 		protected var elapsedTime:Timer = new Timer(20);
 		protected var elapsedTimeFast:Timer = new Timer(20);
 		protected var mc:MovieClip = new MovieClip();
-		
+		protected var maskingShape:Shape;
+		protected var ss:SpriteSheet;
+		protected var johnny:Bitmap;
+		protected var johnny_step:int = 0;
+
 		public function Main():void {
 			if (stage) {
 				init();
@@ -54,25 +63,34 @@ package com.islanddragon.johnny {
 		}
 
 		private function init(e:Event = null):void {
+			stage.scaleMode = "noScale";
+			stage.align = "CC";
+			
+			stage.addEventListener(Event.RESIZE, function(e:Event):void {
+				var s:Stage = e.target as Stage;
+				maskingShape.graphics.moveTo(s.stageWidth / 2 - maskingShape.width / 2, s.stageHeight / 2 - maskingShape.height / 2);
+				trace('triggered');
+			});
+
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			display_txt = new TextField();
-			display_txt.y = 400;
 			display_txt.selectable = true;
 			display_txt.multiline = true;
 			display_txt.text = "asdasds";
-			mc.addChild(display_txt);
+			display_txt.textColor = 0xFFFFFF;
 			loadSkin();
 			this.addEventListener(Event.ENTER_FRAME, process);
 			elapsedTime.start();
 			elapsedTimeFast.start();
 			addChild(mc);
-			
-			var maskingShape:Shape = new Shape();
+			addChild(new FPSCounter());
+
+			maskingShape = new Shape()
 			maskingShape.graphics.lineStyle();
 			maskingShape.graphics.beginFill(0xFFFFFF,1);
 			maskingShape.graphics.drawRect(0,0,512,384);
 			maskingShape.graphics.endFill();
-			
+
 			mc.mask = maskingShape;
 		}
 		
@@ -85,7 +103,13 @@ package com.islanddragon.johnny {
 				var zf:ZipFile = z.getFileAt(i);
 				var key:String = zf.filename.replace('.png', '');
 				loaded_items += key + "\n";
+				if (zf.filename == 'texturepacker.png') {
+					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, loadSpriteSheet);
+					ldr.loadBytes(zf.content);
+					continue;
+				}
 				ldr.loadBytes(zf.content);
+
 				items[key] = ldr;
 				mc.addChild(items[key]);
 			}
@@ -94,9 +118,13 @@ package com.islanddragon.johnny {
 			items['wave_1'].visible = true;
 			items['wave_2'].visible = false;
 			items['wave_3'].visible = false;
-
 		}
 
+		protected function loadSpriteSheet(e:Event):void {
+			var b:Bitmap = new Bitmap(e.target.content.bitmapData);
+			ss = new SpriteSheet(b, 75, 75);
+		}
+		
 		protected function orderLayers():void {
 			var z:Number = 0;
 			var p:DisplayObject;
@@ -105,17 +133,16 @@ package com.islanddragon.johnny {
 				if (p === null) {
 					p = d.parent;
 				}
-				
+
 				if (d.parent.getChildIndex(d) != z) {
 					d.parent.setChildIndex(d, z);
 				}
-				
+
 				d.z = z;
 				z++;
 			}
-			display_txt.parent.setChildIndex(display_txt, z);
 		}
-		
+
 		protected function process(e:Event):void {
 			if (elapsedTimeFast.currentCount > 5) {
 				items['cloud_1'].x -= 7;
@@ -143,6 +170,18 @@ package com.islanddragon.johnny {
 				}
 				elapsedTime.reset();
 				elapsedTime.start();
+
+				return;
+				if (johnny_step > 5 + 6) {
+					johnny_step = 6;
+				}
+				if (johnny === null) {
+					johnny = new Bitmap(ss.drawTile(johnny_step));
+					addChild(johnny);
+				} else {
+					johnny.bitmapData = ss.drawTile(johnny_step);
+				}
+				johnny_step++;
 			}
 		}
 	}
