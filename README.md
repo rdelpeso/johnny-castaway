@@ -31,6 +31,21 @@ I plan this remake with 2 main objectives:
 And many more things that I'm sure people will suggest or I will realize as
 thedevelopment progresses.
 
+Tools
+-----
+
+Flash Develop 4.0.1 - http://www.flashdevelop.org/
+AS3 IDE.
+
+Texture Packer - http://www.texturepacker.com/download/
+Sprite sheet generation.
+
+Ben's Sprite Sheet AS3 Class - http://www.bensilvis.com/?p=229
+Examples - http://www.bensilvis.com/?p=317
+
+Instant Storm - http://www.instantstorm.com/
+Screensaver generation.
+
 License
 -------
 
