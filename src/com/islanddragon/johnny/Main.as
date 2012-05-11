@@ -5,6 +5,7 @@ package com.islanddragon.johnny {
 	import flash.display.Loader;
 	import flash.display.LoaderInfo;
 	import flash.display.MovieClip;
+	import flash.events.MouseEvent;
 	import flash.system.LoaderContext;
 	import flash.display.Sprite;
 	import flash.display.Shape;
@@ -46,13 +47,14 @@ package com.islanddragon.johnny {
 
 		protected var loaded_items:String = "";
 		protected var display_txt:TextField;
+		protected var globalTimer:Timer = new Timer(20);
 		protected var elapsedTime:Timer = new Timer(20);
 		protected var elapsedTimeFast:Timer = new Timer(20);
 		protected var mc:MovieClip = new MovieClip();
 		protected var maskingShape:Shape;
 		protected var ss:SpriteSheet;
-		protected var johnny:Bitmap;
-		protected var johnny_step:int = 0;
+		protected var johnny:Johnny;
+		protected var johnnyPlaceHolder:Bitmap;
 
 		public function Main():void {
 			if (stage) {
@@ -69,7 +71,6 @@ package com.islanddragon.johnny {
 			stage.addEventListener(Event.RESIZE, function(e:Event):void {
 				var s:Stage = e.target as Stage;
 				maskingShape.graphics.moveTo(s.stageWidth / 2 - maskingShape.width / 2, s.stageHeight / 2 - maskingShape.height / 2);
-				trace('triggered');
 			});
 
 			removeEventListener(Event.ADDED_TO_STAGE, init);
@@ -79,7 +80,7 @@ package com.islanddragon.johnny {
 			display_txt.text = "asdasds";
 			display_txt.textColor = 0xFFFFFF;
 			loadSkin();
-			this.addEventListener(Event.ENTER_FRAME, process);
+			addEventListener(Event.ENTER_FRAME, process);
 			elapsedTime.start();
 			elapsedTimeFast.start();
 			addChild(mc);
@@ -92,6 +93,10 @@ package com.islanddragon.johnny {
 			maskingShape.graphics.endFill();
 
 			mc.mask = maskingShape;
+			
+			addEventListener(MouseEvent.CLICK, function (e:MouseEvent):void {
+				trace(e.stageX + ',' + e.stageY);
+			});
 		}
 		
 		protected function loadSkin(name:String = 'original'):void {
@@ -123,6 +128,11 @@ package com.islanddragon.johnny {
 		protected function loadSpriteSheet(e:Event):void {
 			var b:Bitmap = new Bitmap(e.target.content.bitmapData);
 			ss = new SpriteSheet(b, 75, 75);
+			globalTimer.reset();
+			globalTimer.start();
+			johnnyPlaceHolder = new Bitmap();
+			johnny = new Johnny(this, johnnyPlaceHolder, globalTimer, ss);
+			addEventListener(Event.ENTER_FRAME, johnny.update);
 		}
 		
 		protected function orderLayers():void {
@@ -138,7 +148,6 @@ package com.islanddragon.johnny {
 					d.parent.setChildIndex(d, z);
 				}
 
-				d.z = z;
 				z++;
 			}
 		}
@@ -170,33 +179,9 @@ package com.islanddragon.johnny {
 				}
 				elapsedTime.reset();
 				elapsedTime.start();
-				animateJohnny();
 			}
 		}
 		
-		protected function animateJohnny() {
-			var speed:Number = 2;
-			if (johnny_step <= 5 || johnny_step > 11) {
-				 if (johnny_step > 11) {
-					johnny_step = 0;
-				}
-				if (johnny === null) {
-					johnny = new Bitmap(ss.drawTile(johnny_step));
-					addChild(johnny);
-					johnny.x += 290;
-					johnny.y += 200;
-				}
-				johnny.bitmapData = ss.drawTile(johnny_step);
-				johnny.x += speed;
-				johnny.y -= speed;
-				johnny_step++;
-			} else if (johnny_step <= 11) {
-				var step:int = johnny_step - 6;
-					johnny.bitmapData = ss.drawTile(johnny_step);
-					johnny.x -= speed;
-					johnny.y += speed;
-				johnny_step++;
-			}
-		}
+
 	}
 }
