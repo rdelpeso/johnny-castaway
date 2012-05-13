@@ -2,6 +2,7 @@ package com.islanddragon.johnny {
 	import com.bensilvis.spriteSheet.SpriteSheet;
 	import flash.display.Bitmap;
 	import flash.display.Sprite;
+	import flash.events.MouseEvent;
 	import flash.geom.Point;
 	import flash.utils.Timer;
 	import flash.events.Event;
@@ -25,6 +26,10 @@ package com.islanddragon.johnny {
 		protected var speed:Number;
 		protected var points:Array = [];
 		protected var johnny_center_point:Point;
+		protected var flipped:Boolean = false;
+		protected var direction:Point;
+		protected var flip_scalex:int = 1;
+		protected var flip_offset:int = 0;
 		
 		public function Johnny(stage:Sprite, johnny:Bitmap, timer:Timer, ss:SpriteSheet):void {
 			this.stage = stage;
@@ -41,7 +46,7 @@ package com.islanddragon.johnny {
 			points.push(new Point(442,261));
 			points.push(new Point(360,271));
 		}
-		
+
 		public function update(e:Event):void {
 			if (called < 5) {
 				called++;
@@ -61,9 +66,11 @@ package com.islanddragon.johnny {
 				return;
 			}
 
-			prevPos = currPos;
-			postPos = p.clone();
+			prevPos = currPos.clone();
+			postPos = p;
 			speed = s;
+			direction = new Point(postPos.x - currPos.x, postPos.y - currPos.y);
+			direction.normalize(speed);
 		}
 		
 		protected function loadJohnny():void {
@@ -84,31 +91,36 @@ package com.islanddragon.johnny {
 		}
 		
 		protected function draw():void {
-			if (currPos.x > postPos.x - 1 && currPos.x < postPos.x + 1
-				&& currPos.y > postPos.y - 1 && currPos.y < postPos.y + 1) {
+			if (currPos.x >= postPos.x - 2 && currPos.x <= postPos.x + 2
+				&& currPos.y >= postPos.y - 2 && currPos.y <= postPos.y + 2) {
 				currPos.x = postPos.x;
 				currPos.y = postPos.y;
 
+				prevPos = currPos.clone();
 				var p:int = Math.round(Math.random() * (points.length-1));
-				trace(p);
 				walkTo(points[p], 2);
 				return;
 			}
 
+			currPos.x += direction.x;
+			currPos.y += direction.y;
 
-			var moveVector:Point = new Point(postPos.x - currPos.x, postPos.y - currPos.y);
-			moveVector.normalize(speed);
-			currPos.x += moveVector.x;
-			currPos.y += moveVector.y;
-			
 			johnny.x = currPos.x + johnny_center_point.x;
 			johnny.y = currPos.y + johnny_center_point.y;
 
-			var offset:int = (moveVector.y < 0) ? 0 : 6;
+			var offset:int = (direction.y < 0) ? 0 : 6;
+
+			flipped = false;
+			if ((direction.x >= 0 && direction.y >= 0)
+				|| (direction.x < 0 && direction.y < 0)) {
+				flipped = true;
+			}
+	
 			if (johnny_step > 5) {
 				johnny_step = 0;
 			}
-			johnny.bitmapData = ss.drawTile(johnny_step + offset);
+
+			johnny.bitmapData = ss.drawTile(johnny_step + offset, flipped);
 			johnny_step++;
 		}
 	}

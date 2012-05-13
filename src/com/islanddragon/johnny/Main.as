@@ -5,6 +5,7 @@ package com.islanddragon.johnny {
 	import flash.display.Loader;
 	import flash.display.LoaderInfo;
 	import flash.display.MovieClip;
+	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
 	import flash.system.LoaderContext;
 	import flash.display.Sprite;
@@ -55,6 +56,7 @@ package com.islanddragon.johnny {
 		protected var ss:SpriteSheet;
 		protected var johnny:Johnny;
 		protected var johnnyPlaceHolder:Bitmap;
+		protected var fpsCounter:FPSCounter;
 
 		public function Main():void {
 			if (stage) {
@@ -84,7 +86,9 @@ package com.islanddragon.johnny {
 			elapsedTime.start();
 			elapsedTimeFast.start();
 			addChild(mc);
-			addChild(new FPSCounter());
+			fpsCounter = new FPSCounter();
+			fpsCounter.visible = false;
+			addChild(fpsCounter);
 
 			maskingShape = new Shape()
 			maskingShape.graphics.lineStyle();
@@ -94,9 +98,13 @@ package com.islanddragon.johnny {
 
 			mc.mask = maskingShape;
 			
-			addEventListener(MouseEvent.CLICK, function (e:MouseEvent):void {
-				trace(e.stageX + ',' + e.stageY);
-			});
+			stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+		}
+		
+		protected function onKeyUp(k:KeyboardEvent):void {
+			if (k.charCode === 102) {
+				fpsCounter.visible = (fpsCounter.visible) ? false : true;
+			}
 		}
 		
 		protected function loadSkin(name:String = 'original'):void {
@@ -147,15 +155,14 @@ package com.islanddragon.johnny {
 				if (d.parent.getChildIndex(d) != z) {
 					d.parent.setChildIndex(d, z);
 				}
-
 				z++;
 			}
 		}
 
 		protected function process(e:Event):void {
 			if (elapsedTimeFast.currentCount > 5) {
-				items['cloud_1'].x -= 7;
-				items['cloud_2'].x -= 5;
+				items['cloud_1'].x -= 0.5;
+				items['cloud_2'].x -= 1;
 				elapsedTimeFast.reset();
 				elapsedTimeFast.start();
 				

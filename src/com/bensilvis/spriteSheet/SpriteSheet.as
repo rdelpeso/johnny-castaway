@@ -6,6 +6,7 @@ package com.bensilvis.spriteSheet
 	import flash.events.Event;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.geom.Matrix;
 
 	public class SpriteSheet extends Sprite
 	{
@@ -39,13 +40,24 @@ package com.bensilvis.spriteSheet
 			addEventListener(Event.REMOVED_FROM_STAGE, remove);
 		}
 
-		public function drawTile(tileNumber:int):BitmapData
+		public function drawTile(tileNumber:int, flipped:Boolean = false):BitmapData
 		{
 			tileRectangle.x = int((tileNumber % rowLength)) * tileWidth;
 			tileRectangle.y = int((tileNumber / rowLength)) * tileHeight;
 			canvasBitmapData.copyPixels(tileSheetBitmapData, tileRectangle, tilePoint);
-
-			return canvasBitmapData.clone();
+	
+			var bitmatData:BitmapData = canvasBitmapData.clone();
+			
+			if (flipped) {
+				var flipHorizontalMatrix:Matrix = new Matrix()
+				flipHorizontalMatrix.scale(-1,1)
+				flipHorizontalMatrix.translate(bitmatData.width,0)
+				
+				var flippedBitmap:BitmapData = new BitmapData(bitmatData.width, bitmatData.height, true, 0xFFFFFF);
+				flippedBitmap.draw(bitmatData, flipHorizontalMatrix);
+				return flippedBitmap;
+			}
+			return bitmatData;
 		}
 
 		public function tileBoard(boardIndex:Array):BitmapData
