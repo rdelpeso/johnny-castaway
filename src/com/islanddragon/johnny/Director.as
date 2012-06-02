@@ -23,13 +23,22 @@ package com.islanddragon.johnny {
 		protected var scripts:Dictionary = new Dictionary();
 		protected var depth:int = 0;
 		protected var expectedDepth:int = 0;
-		protected var cyclesUpdate:int = 5;
+		protected var cyclesUpdate:int = 6;
 		protected var cycleLength:int = 20;
 		protected var assetsLoaded:Boolean = false;
+		protected var actions:Array = new Array();
+		protected var movingActors:Array = [
+			'johnny',
+			'cloud_1',
+			'cloud_2',
+			'wave',
+		];
 		
 		public function Director (s:Stage) {
 			t = new Timer(cycleLength);
 			this.s = s;
+			s.scaleMode = "noScale";
+			s.align = "CC";
 		}
 		
 		public function run():void {
@@ -42,19 +51,40 @@ package com.islanddragon.johnny {
 			if (t.currentCount < cyclesUpdate || assetsLoaded === false) {
 				return;
 			}
-			trace('triggered ' + stage.height);
 			t.reset();
 			t.start();
 			update(e);
 		}
 		
 		public function update(e:Event):void {
+			for (var i:String in scripts) {
+				var acts:Array = scripts[i].update();
+				if (acts.length > 0) {
+					actions.push(acts[0]);
+				}
+			}
+			handleActions();
 			draw();
 		}
 		
 		public function draw():void {
 			for (var i:String in actors) {
 				actors[i].draw();
+			}
+			for (var j:String in props) {
+				props[j].draw();
+			}
+		}
+		
+		protected function handleActions():void {
+			for (var i:String in actions) {
+				var action:Action = actions[i];
+				
+				if (actors.hasOwnProperty(action.assetName) === true && actors[action.assetName].isBusy() === false) {
+					actors[action.assetName].trigger(action.actionName, action.params, action.delay);
+					trace('Fired: actors[' + action.assetName + '].trigger(' + action.actionName + ', ' + action.params.toString() + ', ' + action.delay + ')');
+					actions.shift();
+				}
 			}
 		}
 		
@@ -100,7 +130,7 @@ package com.islanddragon.johnny {
 				ldr.fileName = fname;
 				ldr.director = this;
 				
-				if (fname[0] === 'spritesheet') {
+				if (fname[0] === 'spritesheet' || movingActors.indexOf(fname[0]) !== -1) {
 					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, completedLoadActor);
 					ldr.loadBytes(zf.content);
 					continue;
@@ -111,23 +141,101 @@ package com.islanddragon.johnny {
 			}
 		}
 
+		protected function loadScripts():void {
+			var json:String = (<![CDATA[
+				[[
+				{"assetName": "sky", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "sea", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "wave_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "wave_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "wave_3", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "island", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_shadow", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_back", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_tree", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_coco", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "johnny", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_front", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "cloud_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "cloud_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "teleport",
+					"params": { "x": 270, "y": 275 },
+					"delay": 0
+				},
+				{
+					"assetName": "cloud_1",
+					"actionName": "walk",
+					"params": { "x": -200, "y": 100 },
+					"delay": 0
+				},	
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 248, "y": 265 },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 2}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 340, "y": 245 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 360, "y": 240 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 400, "y": 245 },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 2}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 442, "y": 261 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "walk",
+					"params": { "x": 360, "y": 271 },
+					"delay": 0
+				}
+				]]
+			]]>).toString();
+			addScript("main", new Script("main", json));
+		}
+		
 		protected function checkLoaded(e:Event):void {
 			if (e.target.depth >= e.target.expectedDepth) {
 				e.target.assetsLoaded = true;
 				e.target.removeEventListener(Event.ENTER_FRAME, e.target.checkLoaded);
 				e.target.addEventListener(Event.ENTER_FRAME, e.target.throller);
+				e.target.loadScripts();
 				run();
 			}
 		}
 		
 		protected function completedLoadActor(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
-			var b:Bitmap = new Bitmap(e.target.content.bitmapData);
-			e.target.loader.director.addActor(l.fileName[3], new Actor(l.fileName[3], b, l.fileName[1], l.fileName[2]));
+			if (l.fileName.length === 1) {
+				l.director.addActor(l.fileName[0], new Actor(l.fileName[0], loadBm(e)));
+			} else {
+				l.director.addActor(l.fileName[3], new Actor(l.fileName[3], loadBm(e), l.fileName[1], l.fileName[2]));
+			}
 			depth++;
 		}
 
 		protected function completedLoadProp(e:Event):void {
+			var l:CustomLoader = (e.target.loader as CustomLoader);
+			l.director.addProp(l.fileName[0], new Prop(l.fileName[0], loadBm(e)));
 			depth++;
 		}
 
@@ -135,23 +243,8 @@ package com.islanddragon.johnny {
 			
 		}
 	
-		protected function loadSpriteSheet(e:Event):void {
-			var b:Bitmap = new Bitmap(e.target.content.bitmapData);
-			//ss = new SpriteSheet(b, 75, 75);
-			//globalTimer.reset();
-			//globalTimer.start();
-			//johnnyPlaceHolder = new Bitmap();
-			//johnny = new Johnny(this, johnnyPlaceHolder, globalTimer, ss);
-			//addEventListener(Event.ENTER_FRAME, johnny.update);
+		protected function loadBm(e:Event):Bitmap {
+			return new Bitmap(e.target.content.bitmapData);
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
 	}
 }

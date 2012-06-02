@@ -1,35 +1,61 @@
 package com.islanddragon.johnny {
-	import com.bensilvis.spriteSheet.SpriteSheet;
 	import flash.display.Bitmap;
-	import flash.display.BitmapData;
-	import flash.display.Sprite;
-	public class Actor extends Sprite {
-		protected var _name:String;
-		protected var holder:Sprite;
-		protected var b:Bitmap;
-		protected var isSpriteSheet:Boolean = false;
-		protected var spriteSheet:SpriteSheet;
+	import flash.geom.Point;
+	
+	public class Actor extends Prop {
+		protected var nextPosition:Point = new Point();
+		protected var direction:Point = new Point();
+		protected var speed:int = 5;
 
-		public function Actor(name:String, b:Bitmap, w:int = 0, h:int = 0) {
-			this._name = name;
-			holder = new Sprite();
-			
-			if (w !== 0 && h !== 0) {
-				spriteSheet = new SpriteSheet(b, w, h);
-				b = new Bitmap(new BitmapData(1, 1));
-				isSpriteSheet = true;
-			} else {
-				this.b = b;
-			}
-
-			addChild(holder);
-			holder.addChild(b);
+		public function Actor(name:String, b:Bitmap, w:int=0, h:int=0) {
+			super(name, b, w, h);
 		}
 
-		public function draw():void {
-			holder.removeChildAt(0);
-			var b:Bitmap = new Bitmap(spriteSheet.drawTile(1));
-			holder.addChild(b);
+		protected override function update():void {
+			super.update();
+
+			var moved:Boolean = move();
+			if (moved === false) {
+				busy = false;
+			}
+		}
+
+		protected function walk(params:Object, delay:int):void {
+			nextPosition = new Point(params.x, params.y);
+			direction = new Point(nextPosition.x - position.x, nextPosition.y - position.y);
+			direction.normalize(speed);
+		}
+		
+		protected function teleport(params:Object, delay:int):void {
+			position.x = nextPosition.x = params.x;
+			position.y = nextPosition.y = params.y;
+			translateHolder();
+		}
+		
+		protected function move():Boolean {
+			if (position.x === nextPosition.x && position.y === nextPosition.y) {
+				return false;
+			}
+
+			var movedX:Boolean = true;
+			var movedY:Boolean = true;
+			
+			if ((direction.x > 0 && position.x >= nextPosition.x) || (direction.x < 0 && position.x <= nextPosition.x) || direction.x === 0) {
+				movedX = false;
+			}
+			if ((direction.y > 0 && position.y >= nextPosition.y) || (direction.y < 0 && position.y <= nextPosition.y) || direction.y === 0) {
+				movedY = false;
+			}
+
+			if (movedX === false && movedY === false) {
+				position = new Point(nextPosition.x, nextPosition.y);
+				return false;
+			}
+			
+			position.x += direction.x;
+			position.y += direction.y;
+			
+			return true;
 		}
 	}
 }
