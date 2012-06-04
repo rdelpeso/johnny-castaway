@@ -13,23 +13,23 @@ package com.islanddragon.johnny {
 
 		protected override function update():void {
 			super.update();
-
-			var moved:Boolean = move();
-			if (moved === false) {
-				busy = false;
-			}
+			busy = move();
+			return;
 		}
-
-		protected function walk(params:Object, delay:int):void {
+	
+		prop_actions_ns function walk(params:Object, delay:int):void {
+			trace('move to ' + params.x + ',' + params.y);
 			nextPosition = new Point(params.x, params.y);
 			direction = new Point(nextPosition.x - position.x, nextPosition.y - position.y);
 			direction.normalize(speed);
+			busy = true;
 		}
 		
-		protected function teleport(params:Object, delay:int):void {
+		prop_actions_ns function teleport(params:Object, delay:int):void {
 			position.x = nextPosition.x = params.x;
 			position.y = nextPosition.y = params.y;
 			translateHolder();
+			busy = true;
 		}
 		
 		protected function move():Boolean {

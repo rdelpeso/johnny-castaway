@@ -80,10 +80,24 @@ package com.islanddragon.johnny {
 			for (var i:String in actions) {
 				var action:Action = actions[i];
 				
-				if (actors.hasOwnProperty(action.assetName) === true && actors[action.assetName].isBusy() === false) {
-					actors[action.assetName].trigger(action.actionName, action.params, action.delay);
-					trace('Fired: actors[' + action.assetName + '].trigger(' + action.actionName + ', ' + action.params.toString() + ', ' + action.delay + ')');
+				var target:Prop = null;
+				if (actors.hasOwnProperty(action.assetName) === true) {
+					target = actors[action.assetName];
+				}
+				if (props.hasOwnProperty(action.assetName) === true) {
+					target = props[action.assetName];
+				}
+
+				if (target === null) {
 					actions.shift();
+					return;
+				}
+				
+				if (target.isBusy() === false) {
+					trace('Fired: actors[' + action.assetName + '].trigger(' + action.actionName + ', ' + action.params.toString() + ', ' + action.delay + ')');
+					target.trigger(action.actionName, action.params, action.delay);
+					actions.shift();
+					return;
 				}
 			}
 		}
@@ -145,7 +159,7 @@ package com.islanddragon.johnny {
 			var json:String = (<![CDATA[
 				[[
 				{"assetName": "sky", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "sea", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "sea", "actionName": "moveToFront", "params": { }, "delay": 0 },
 				{"assetName": "wave_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "wave_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "wave_3", "actionName": "moveToFront", "params": {}, "delay": 0 },
