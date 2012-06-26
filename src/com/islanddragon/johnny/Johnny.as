@@ -1,127 +1,108 @@
-package com.islanddragon.johnny {
-	import com.bensilvis.spriteSheet.SpriteSheet;
+package com.islanddragon.johnny 
+{
 	import flash.display.Bitmap;
-	import flash.display.Sprite;
-	import flash.events.MouseEvent;
 	import flash.geom.Point;
-	import flash.utils.Timer;
-	import flash.events.Event;
+	public class Johnny extends Actor
+	{
+		public function Johnny(name:String, b:Bitmap, w:int=0, h:int=0) {
+			super(name, b, w, h);
+			this.animations['idleLeft'] = {
+				'loop': true,
+				'flipped': true,
+				'sequence': [3,4]
+			};
+			
+			this.animations['idleRight'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [3,4]
+			};
 
-	/**
-	 * ...
-	 * @author Raidel del Peso
-	 */
-	internal class Johnny {
-		
-		protected var johnny_step:int;
-		protected var stage:Sprite;
-		protected var johnny:Bitmap;
-		protected var timer:Timer;
-		protected var ss:SpriteSheet;
-		protected var prevPos:Point;
-		protected var currPos:Point;
-		protected var postPos:Point;
-		protected var called:int;
-		protected var loaded:Boolean;
-		protected var speed:Number;
-		protected var points:Array = [];
-		protected var johnny_center_point:Point;
-		protected var flipped:Boolean = false;
-		protected var direction:Point;
-		protected var flip_scalex:int = 1;
-		protected var flip_offset:int = 0;
-		
-		public function Johnny(stage:Sprite, johnny:Bitmap, timer:Timer, ss:SpriteSheet):void {
-			this.stage = stage;
-			this.johnny = johnny;
-			this.johnny_center_point = new Point(-37.5, -65);
-			this.timer = timer;
-			this.ss = ss;
-			johnny_step = 0;
-			called = 0;
-			loaded = false;
-			speed = 2;
-			points.push(new Point(248,265));
-			points.push(new Point(364,243));
-			points.push(new Point(442,261));
-			points.push(new Point(360,271));
+			this.animations['walkBackLeft'] = {
+				'loop': true,
+				'flipped': true,
+				'sequence': [21, 22, 23, 24, 25, 26]
+			};
+			
+			this.animations['walkBackRight'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [21, 22, 23, 24, 25, 26]
+			};
+			
+			this.animations['walkFrontLeft'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [27, 28, 29, 30, 31, 32]
+			};
+			
+			this.animations['walkFrontRight'] = {
+				'loop': true,
+				'flipped': true,
+				'sequence': [27, 28, 29, 30, 31, 32]
+			};
+
+			this.animations['climb'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [0, 1, 2]
+			};
+
+			this.animations['peek'] = {
+				'loop': false,
+				'flipped': false,
+				'sequence': [14, 15]
+			};
+
+			this.animations['jump'] = {
+				'loop': false,
+				'flipped': false,
+				'sequence': [5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 9, 10, 11, 12, 13]
+			};
+
+			this.animations['swim'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [17, 18, 19, 20]
+			};
+
+			this.animations['walkOffWater'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [33, 34, 35, 36]
+			};
 		}
-
-		public function update(e:Event):void {
-			if (called < 5) {
-				called++;
+		
+		public override function draw():void {
+			if (isSpriteSheet === false) {
 				return;
 			}
 
-			if (loaded) {
-				draw();
-			} else {
-				loadJohnny();
-			}
-			called = 0;
+			holder.removeChildAt(0);
+			var b:Bitmap = new Bitmap(spriteSheet.drawTile(Math.round(Math.random() * 11)));
+			holder.addChild(b);
+			translateHolder();
+			
+			super.draw();
 		}
 		
-		public function walkTo(p:Point, s:Number):void {
-			if (prevPos.x != currPos.x && prevPos.y != currPos.y) {
-				return;
+		public override function translate(params:Object, delay:int):void {
+			super.translate(params, delay);
+
+			if (animatedState === 'walk') {
+				var hor:String = 'Left';
+				var ver:String = 'Back';
+
+				if (direction.x > 0) {
+					hor = 'Right';
+				}
+				
+				if (direction.y > 0) {
+					ver = 'Front';
+				}
+				
+				animatedState = 'walk' + ver + hor;
 			}
-
-			prevPos = currPos.clone();
-			postPos = p;
-			speed = s;
-			direction = new Point(postPos.x - currPos.x, postPos.y - currPos.y);
-			direction.normalize(speed);
-		}
-		
-		protected function loadJohnny():void {
-			if (ss === null) {
-				return;
-			}
-
-			if (johnny.width === 0 && johnny.height === 0) {
-				johnny = new Bitmap(ss.drawTile(johnny_step));
-				stage.addChild(johnny);
-				prevPos = new Point(points[0].x, points[0].y);
-				currPos = new Point(points[0].x, points[0].y);
-				postPos = new Point(points[0].x, points[0].y);
-				johnny.x = points[0].x + johnny_center_point.x;
-				johnny.y = points[0].y + johnny_center_point.y;
-				loaded = true;
-			}
-		}
-		
-		protected function draw():void {
-			if (currPos.x >= postPos.x - 2 && currPos.x <= postPos.x + 2
-				&& currPos.y >= postPos.y - 2 && currPos.y <= postPos.y + 2) {
-				currPos.x = postPos.x;
-				currPos.y = postPos.y;
-
-				prevPos = currPos.clone();
-				var p:int = Math.round(Math.random() * (points.length-1));
-				walkTo(points[p], 2);
-				return;
-			}
-
-			currPos.x += direction.x;
-			currPos.y += direction.y;
-
-			johnny.x = currPos.x + johnny_center_point.x;
-			johnny.y = currPos.y + johnny_center_point.y;
-
-			var offset:int = (direction.y < 0) ? 0 : 6;
-
-			flipped = false;
-			if ((direction.x >= 0 && direction.y >= 0)
-				|| (direction.x < 0 && direction.y < 0)) {
-				flipped = true;
-			}
-	
-			if (johnny_step > 5) {
-				johnny_step = 0;
-			}
-
-			johnny.bitmapData = ss.drawTile(johnny_step + offset, flipped);
-			johnny_step++;
 		}
 	}
 

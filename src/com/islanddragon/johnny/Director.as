@@ -6,6 +6,7 @@ package com.islanddragon.johnny {
 	import flash.display.Sprite;
 	import flash.display.Stage;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	import flash.utils.Timer;
@@ -23,29 +24,32 @@ package com.islanddragon.johnny {
 		protected var scripts:Dictionary = new Dictionary();
 		protected var depth:int = 0;
 		protected var expectedDepth:int = 0;
-		protected var cyclesUpdate:int = 6;
+		protected var cyclesUpdate:int = 4;
 		protected var cycleLength:int = 20;
 		protected var assetsLoaded:Boolean = false;
 		protected var actions:Array = new Array();
-		protected var movingActors:Array = [
-			'johnny',
-			'cloud_1',
-			'cloud_2',
-			'wave',
-		];
-		
+
+		protected var assetsMap:Object = {
+			'Johnny': ['johnny'],
+			'Actor': ['cloud_1','cloud_2','wave']
+		};
+
 		public function Director (s:Stage) {
 			t = new Timer(cycleLength);
 			this.s = s;
 			s.scaleMode = "noScale";
 			s.align = "CC";
+			
+			this.s.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				trace(e.stageX + ',' + e.stageY);
+			} );
 		}
-		
+
 		public function run():void {
 			t.start();
 			addEventListener(Event.ENTER_FRAME, throller);
 		}
-		
+
 		public function throller(e:Event):void {
 			var elapsedTime:int = t.currentCount * cycleLength;
 			if (t.currentCount < cyclesUpdate || assetsLoaded === false) {
@@ -93,15 +97,16 @@ package com.islanddragon.johnny {
 					return;
 				}
 				
-				if (target.isBusy() === false) {
-					trace('Fired: actors[' + action.assetName + '].trigger(' + action.actionName + ', ' + action.params.toString() + ', ' + action.delay + ')');
-					target.trigger(action.actionName, action.params, action.delay);
-					actions.shift();
+				if (target.isBusy() === true) {
 					return;
 				}
+				
+				target.trigger(action.actionName, action.params, action.delay);
+				actions.shift();
+				return;
 			}
 		}
-		
+
 		public function addActor(k:String, v:Actor):void {
 			if (actors.hasOwnProperty(k) === false) {
 				actors[k] = v;
@@ -144,17 +149,20 @@ package com.islanddragon.johnny {
 				ldr.fileName = fname;
 				ldr.director = this;
 				
-				if (fname[0] === 'spritesheet' || movingActors.indexOf(fname[0]) !== -1) {
-					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, completedLoadActor);
-					ldr.loadBytes(zf.content);
-					continue;
+				var method:String = 'completedLoadProp';
+				
+				for (var cls:String in assetsMap) {
+					if (assetsMap[cls].indexOf(fname[0]) !== -1) {
+						method = 'completedLoad' + cls;
+						break;
+					}
 				}
-	
-				ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, completedLoadProp);
+
+				ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, this[method]);
 				ldr.loadBytes(zf.content);
 			}
 		}
-
+		
 		protected function loadScripts():void {
 			var json:String = (<![CDATA[
 				[[
@@ -167,59 +175,167 @@ package com.islanddragon.johnny {
 				{"assetName": "palm_shadow", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "palm_back", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "palm_tree", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_coco", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "johnny", "actionName": "moveToFront", "params": {}, "delay": 0 },
+				{"assetName": "palm_coco", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "palm_front", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "cloud_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{"assetName": "cloud_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
 				{
 					"assetName": "johnny",
-					"actionName": "teleport",
-					"params": { "x": 270, "y": 275 },
+					"actionName": "idle",
+					"params": { "x": 265, "y": 265, "animation": "idleRight" },
 					"delay": 0
 				},
 				{
 					"assetName": "cloud_1",
-					"actionName": "walk",
-					"params": { "x": -200, "y": 100 },
+					"actionName": "translate",
+					"params": { "x": -300, "y": 0 },
 					"delay": 0
-				},	
+				},
+				{
+					"assetName": "cloud_2",
+					"actionName": "translate",
+					"params": { "x": -500, "y": 0 },
+					"delay": 0
+				},
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 248, "y": 265 },
 					"delay": 0
 				},
-				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 2}, "delay": 0 },
+				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 1}, "delay": 0 },
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 340, "y": 245 },
 					"delay": 0
 				},
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 360, "y": 240 },
 					"delay": 0
 				},
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 400, "y": 245 },
 					"delay": 0
 				},
-				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 2}, "delay": 0 },
+				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 1}, "delay": 0 },
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 442, "y": 261 },
 					"delay": 0
 				},
 				{
 					"assetName": "johnny",
-					"actionName": "walk",
+					"actionName": "translate",
 					"params": { "x": 360, "y": 271 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 360, "y": 246 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 360, "y": 180, "animation": "climb" },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": { "x": 360, "y": 155, "animation": "peek" },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 2}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": { "x": 360, "y": 155, "animation": "peek", "wait": 5 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": { "x": 360, "y": 155, "animation": "jump", "wait": 0 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 263, "y": 134, "speed": 25, "animation": "jump" },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 159, "y": 285, "speed": 25, "animation": "jump" },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": { "x": 159, "y": 285, "animation": "jump", "wait": 2 },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 2}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": { "x": 159, "y": 285, "animation": "swim", "wait": 4 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 244, "y": 246, "animation": "swim" },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 4}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 350, "y": 230, "animation": "swim" },
+					"delay": 0
+				},
+				
+				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 3}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "teleport",
+					"params": { "x": 350, "y": 270 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 350, "y": 240, "animation": "walkOffWater", "speed": 2 },
+					"delay": 0
+				},
+				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 5}, "delay": 0 },
+				{
+					"assetName": "johnny",
+					"actionName": "translate",
+					"params": { "x": 345, "y": 250, "animation": "walkOffWater", "speed": 2 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": {"animation": "idleLeft", "wait": 10 },
+					"delay": 0
+				},
+				{
+					"assetName": "johnny",
+					"actionName": "idle",
+					"params": {"animation": "idleRight", "wait": 10 },
 					"delay": 0
 				}
 				]]
@@ -237,6 +353,12 @@ package com.islanddragon.johnny {
 			}
 		}
 		
+		protected function completedLoadProp(e:Event):void {
+			var l:CustomLoader = (e.target.loader as CustomLoader);
+			l.director.addProp(l.fileName[0], new Prop(l.fileName[0], loadBm(e)));
+			depth++;
+		}
+
 		protected function completedLoadActor(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
 			if (l.fileName.length === 1) {
@@ -247,14 +369,13 @@ package com.islanddragon.johnny {
 			depth++;
 		}
 
-		protected function completedLoadProp(e:Event):void {
+		protected function completedLoadJohnny(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
-			l.director.addProp(l.fileName[0], new Prop(l.fileName[0], loadBm(e)));
+			l.director.addActor(l.fileName[0], new Johnny(l.fileName[0], loadBm(e), l.fileName[1], l.fileName[2]));
 			depth++;
 		}
 
 		protected function completedLoadScript(e:Event):void {
-			
 		}
 	
 		protected function loadBm(e:Event):Bitmap {

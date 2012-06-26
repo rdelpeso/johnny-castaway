@@ -15,9 +15,6 @@ package com.islanddragon.johnny {
 		protected var position:Point = new Point();
 		protected var centerPoint:Point = new Point();
 
-		// Ty TheCanadian from Kirupa: http://www.kirupa.com/forum/showthread.php?373476-AS3-inheritance-calling-child-method-from-parent
-		protected namespace prop_actions_ns;
-
 		public function Prop(name:String, b:Bitmap, w:int = 0, h:int = 0) {
 			this._name = name;
 			holder = new Sprite();
@@ -37,23 +34,14 @@ package com.islanddragon.johnny {
 
 		public function draw():void {
 			update();
-
-			if (isSpriteSheet === false) {
-				return;
-			}
-
-			holder.removeChildAt(0);
-			var b:Bitmap = new Bitmap(spriteSheet.drawTile(Math.round(Math.random() * 11)));
-			holder.addChild(b);
-			translateHolder();
 		}
 		
-		protected function translateHolder():void {
+		public function translateHolder():void {
 			holder.x = position.x - centerPoint.x;
 			holder.y = position.y - centerPoint.y;
 		}
 		
-		protected function update():void {
+		public function update():void {
 			if (isSpriteSheet === false) {
 				return;
 			}
@@ -66,27 +54,34 @@ package com.islanddragon.johnny {
 		
 		public function trigger(action:String, params:Object, delay:int):Boolean {
 			try {
-				this.prop_actions_ns::[action](params, delay);
+				this[action](params, delay);
 				return true;
 			} catch (e:Error) {
-				//trace(e.message);
 				return false;
 			}
 			return false;
 		}
 
-		prop_actions_ns function moveToFront(params:Object, delay:int):void {
+		public function moveToFront(params:Object, delay:int):void {
 			stage.addChild(this);
 		}
 
-		prop_actions_ns function moveBack(params:Object, delay:int):void {
+		public function moveBack(params:Object, delay:int):void {
 			var cur_depth:int = stage.getChildIndex(this);
 			stage.addChildAt(this, cur_depth - params.times);
 		}
 		
-		prop_actions_ns function moveForward(params:Object, delay:int):void {
+		public function moveForward(params:Object, delay:int):void {
 			var cur_depth:int = stage.getChildIndex(this);
 			stage.addChildAt(this, cur_depth + params.times);
+		}
+
+		public function hide(params:Object, delay:int):void {
+			holder.alpha = 0;
+		}		
+
+		public function show(params:Object, delay:int):void {
+			holder.alpha = 100;
 		}
 	}
 }
