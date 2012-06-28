@@ -12,8 +12,8 @@ package com.islanddragon.johnny {
 		protected var prevAnimatedState:String = 'idleRight';
 		protected var animatedFrame:int = 0;
 
-		public function Actor(name:String, b:Bitmap, w:int=0, h:int=0) {
-			super(name, b, w, h);
+		public function Actor(director:Director, name:String, b:Bitmap, w:int=0, h:int=0) {
+			super(director, name, b, w, h);
 		}
 
 		public override function draw():void {

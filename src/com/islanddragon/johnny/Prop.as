@@ -6,6 +6,7 @@ package com.islanddragon.johnny {
 	import flash.geom.Point;
 	public class Prop extends Sprite {
 		public var _name:String;
+		protected var director:Director;
 		protected var holder:Sprite;
 		protected var b:Bitmap;
 		protected var isSpriteSheet:Boolean = false;
@@ -15,7 +16,8 @@ package com.islanddragon.johnny {
 		protected var position:Point = new Point();
 		protected var centerPoint:Point = new Point();
 
-		public function Prop(name:String, b:Bitmap, w:int = 0, h:int = 0) {
+		public function Prop(director:Director, name:String, b:Bitmap, w:int = 0, h:int = 0) {
+			this.director = director;
 			this._name = name;
 			holder = new Sprite();
 			
@@ -28,8 +30,8 @@ package com.islanddragon.johnny {
 				this.b = b;
 			}
 
-			addChild(holder);
 			holder.addChild(b);
+			addChild(holder);
 		}
 
 		public function draw():void {
@@ -63,17 +65,17 @@ package com.islanddragon.johnny {
 		}
 
 		public function moveToFront(params:Object, delay:int):void {
-			stage.addChild(this);
+			director.holder.addChild(this);
 		}
 
 		public function moveBack(params:Object, delay:int):void {
-			var cur_depth:int = stage.getChildIndex(this);
-			stage.addChildAt(this, cur_depth - params.times);
+			var cur_depth:int = director.holder.getChildIndex(this);
+			director.holder.addChildAt(this, cur_depth - params.times);
 		}
 		
 		public function moveForward(params:Object, delay:int):void {
-			var cur_depth:int = stage.getChildIndex(this);
-			stage.addChildAt(this, cur_depth + params.times);
+			var cur_depth:int = director.holder.getChildIndex(this);
+			director.holder.addChildAt(this, cur_depth + params.times);
 		}
 
 		public function hide(params:Object, delay:int):void {

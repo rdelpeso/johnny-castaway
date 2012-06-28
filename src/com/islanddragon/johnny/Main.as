@@ -1,11 +1,13 @@
 package com.islanddragon.johnny {
 	import flash.display.Sprite;
+	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.geom.Rectangle;
 	import flash.text.TextSnapshot;
 
 	[Frame(factoryClass="com.islanddragon.johnny.Preloader")]
 	public class Main extends Sprite {
+		
 		public function Main():void {
 			if (stage) {
 				init();

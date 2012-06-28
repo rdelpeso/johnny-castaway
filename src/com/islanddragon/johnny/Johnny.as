@@ -4,8 +4,8 @@ package com.islanddragon.johnny
 	import flash.geom.Point;
 	public class Johnny extends Actor
 	{
-		public function Johnny(name:String, b:Bitmap, w:int=0, h:int=0) {
-			super(name, b, w, h);
+		public function Johnny(director:Director, name:String, b:Bitmap, w:int=0, h:int=0) {
+			super(director, name, b, w, h);
 			this.animations['idleLeft'] = {
 				'loop': true,
 				'flipped': true,

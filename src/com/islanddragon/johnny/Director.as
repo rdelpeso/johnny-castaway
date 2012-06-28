@@ -3,6 +3,7 @@ package com.islanddragon.johnny {
 	import com.mikechambers.as3corelib.JSON;
 	import flash.display.Bitmap;
 	import flash.display.Loader;
+	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.display.Stage;
 	import flash.events.Event;
@@ -16,8 +17,11 @@ package com.islanddragon.johnny {
 	public class Director extends Sprite{
 		[Embed(source = '../../../../lib/original.skin', mimeType = 'application/octet-stream')]
 		protected var Skin:Class;
-		protected var s:Stage;
 		protected var skinData:ByteArray = new Skin() as ByteArray;
+		[Embed(source = '../../../../lib/original.actions', mimeType = 'application/octet-stream')]
+		protected var Actions:Class;
+		protected var actionsData:ByteArray = new Actions() as ByteArray;
+		protected var s:Stage;
 		protected var t:Timer;
 		protected var actors:Dictionary = new Dictionary();
 		protected var props:Dictionary = new Dictionary();
@@ -28,6 +32,9 @@ package com.islanddragon.johnny {
 		protected var cycleLength:int = 20;
 		protected var assetsLoaded:Boolean = false;
 		protected var actions:Array = new Array();
+		
+		protected var maskingShape:Shape;
+		public var holder:Sprite;
 
 		protected var assetsMap:Object = {
 			'Johnny': ['johnny'],
@@ -40,6 +47,23 @@ package com.islanddragon.johnny {
 			s.scaleMode = "noScale";
 			s.align = "CC";
 			
+			s.addEventListener(Event.RESIZE, function(e:Event):void {
+				var s:Stage = e.target as Stage;
+				maskingShape.graphics.moveTo(s.stageWidth / 2 - maskingShape.width / 2, s.stageHeight / 2 - maskingShape.height / 2);
+			});
+			
+			holder = new Sprite();
+
+			maskingShape = new Shape()
+			maskingShape.graphics.lineStyle();
+			maskingShape.graphics.beginFill(0xFFFFFF,1);
+			maskingShape.graphics.drawRect(0,0,512,384);
+			maskingShape.graphics.endFill();
+			
+			holder.mask = maskingShape;
+			
+			addChild(holder);
+			
 			this.s.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
 				trace(e.stageX + ',' + e.stageY);
 			} );
@@ -48,6 +72,7 @@ package com.islanddragon.johnny {
 		public function run():void {
 			t.start();
 			addEventListener(Event.ENTER_FRAME, throller);
+			runScript({'script':'main'});
 		}
 
 		public function throller(e:Event):void {
@@ -61,12 +86,6 @@ package com.islanddragon.johnny {
 		}
 		
 		public function update(e:Event):void {
-			for (var i:String in scripts) {
-				var acts:Array = scripts[i].update();
-				if (acts.length > 0) {
-					actions.push(acts[0]);
-				}
-			}
 			handleActions();
 			draw();
 		}
@@ -83,6 +102,16 @@ package com.islanddragon.johnny {
 		protected function handleActions():void {
 			for (var i:String in actions) {
 				var action:Action = actions[i];
+				
+				if (action === null) {
+					return;
+				}
+
+				if (action.assetName === 'director') {
+					actions.shift();
+					handleDirectorAction(action);
+					return;
+				}
 				
 				var target:Prop = null;
 				if (actors.hasOwnProperty(action.assetName) === true) {
@@ -107,10 +136,23 @@ package com.islanddragon.johnny {
 			}
 		}
 
+		public function handleDirectorAction(a:Action):void {
+			this[a.actionName](a.params);
+		}
+		
+		public function runScript(params:Object):void {
+			var s:Script = scripts[params.script];
+			var acts:Array = s.update();
+			for (var i:String in acts) {
+				actions.push(acts[i]);
+			}
+			handleActions();
+		}
+		
 		public function addActor(k:String, v:Actor):void {
 			if (actors.hasOwnProperty(k) === false) {
 				actors[k] = v;
-				s.addChild(v);
+				holder.addChild(v);
 				depth++;
 			}
 		}
@@ -118,7 +160,7 @@ package com.islanddragon.johnny {
 		public function addProp(k:String, v:Prop):void {
 			if (props.hasOwnProperty(k) === false) {
 				props[k] = v;
-				s.addChild(v);
+				holder.addChild(v);
 				depth++;
 			}
 		}
@@ -164,183 +206,15 @@ package com.islanddragon.johnny {
 		}
 		
 		protected function loadScripts():void {
-			var json:String = (<![CDATA[
-				[[
-				{"assetName": "sky", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "sea", "actionName": "moveToFront", "params": { }, "delay": 0 },
-				{"assetName": "wave_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "wave_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "wave_3", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "island", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_shadow", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_back", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_tree", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "johnny", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_coco", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "palm_front", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "cloud_1", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{"assetName": "cloud_2", "actionName": "moveToFront", "params": {}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 265, "y": 265, "animation": "idleRight" },
-					"delay": 0
-				},
-				{
-					"assetName": "cloud_1",
-					"actionName": "translate",
-					"params": { "x": -300, "y": 0 },
-					"delay": 0
-				},
-				{
-					"assetName": "cloud_2",
-					"actionName": "translate",
-					"params": { "x": -500, "y": 0 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 248, "y": 265 },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 1}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 340, "y": 245 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 360, "y": 240 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 400, "y": 245 },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 1}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 442, "y": 261 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 360, "y": 271 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 360, "y": 246 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 360, "y": 180, "animation": "climb" },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 360, "y": 155, "animation": "peek" },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 2}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 360, "y": 155, "animation": "peek", "wait": 5 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 360, "y": 155, "animation": "jump", "wait": 0 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 263, "y": 134, "speed": 25, "animation": "jump" },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 159, "y": 285, "speed": 25, "animation": "jump" },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 159, "y": 285, "animation": "jump", "wait": 2 },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 2}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": { "x": 159, "y": 285, "animation": "swim", "wait": 4 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 244, "y": 246, "animation": "swim" },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 4}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 350, "y": 230, "animation": "swim" },
-					"delay": 0
-				},
-				
-				{"assetName": "johnny", "actionName": "moveBack", "params": {"times": 3}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "teleport",
-					"params": { "x": 350, "y": 270 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 350, "y": 240, "animation": "walkOffWater", "speed": 2 },
-					"delay": 0
-				},
-				{"assetName": "johnny", "actionName": "moveForward", "params": {"times": 5}, "delay": 0 },
-				{
-					"assetName": "johnny",
-					"actionName": "translate",
-					"params": { "x": 345, "y": 250, "animation": "walkOffWater", "speed": 2 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": {"animation": "idleLeft", "wait": 10 },
-					"delay": 0
-				},
-				{
-					"assetName": "johnny",
-					"actionName": "idle",
-					"params": {"animation": "idleRight", "wait": 10 },
-					"delay": 0
-				}
-				]]
-			]]>).toString();
-			addScript("main", new Script("main", json));
+			var z:Zip = new Zip();
+			z.loadBytes(actionsData);
+
+			for (var i:Number = 0; i < z.getFileCount(); i++) {
+				var zf:ZipFile = z.getFileAt(i);
+				var str:String = zf.content.readUTFBytes(zf.content.length);
+				var fname:Array = zf.filename.substr(0, zf.filename.indexOf('.json')).split('__');
+				addScript(fname[0], new Script(fname[0], str));
+			}
 		}
 		
 		protected function checkLoaded(e:Event):void {
@@ -355,27 +229,24 @@ package com.islanddragon.johnny {
 		
 		protected function completedLoadProp(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
-			l.director.addProp(l.fileName[0], new Prop(l.fileName[0], loadBm(e)));
+			l.director.addProp(l.fileName[0], new Prop(l.director, l.fileName[0], loadBm(e)));
 			depth++;
 		}
 
 		protected function completedLoadActor(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
 			if (l.fileName.length === 1) {
-				l.director.addActor(l.fileName[0], new Actor(l.fileName[0], loadBm(e)));
+				l.director.addActor(l.fileName[0], new Actor(l.director, l.fileName[0], loadBm(e)));
 			} else {
-				l.director.addActor(l.fileName[3], new Actor(l.fileName[3], loadBm(e), l.fileName[1], l.fileName[2]));
+				l.director.addActor(l.fileName[3], new Actor(l.director, l.fileName[3], loadBm(e), l.fileName[1], l.fileName[2]));
 			}
 			depth++;
 		}
 
 		protected function completedLoadJohnny(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
-			l.director.addActor(l.fileName[0], new Johnny(l.fileName[0], loadBm(e), l.fileName[1], l.fileName[2]));
+			l.director.addActor(l.fileName[0], new Johnny(l.director, l.fileName[0], loadBm(e), l.fileName[1], l.fileName[2]));
 			depth++;
-		}
-
-		protected function completedLoadScript(e:Event):void {
 		}
 	
 		protected function loadBm(e:Event):Bitmap {
