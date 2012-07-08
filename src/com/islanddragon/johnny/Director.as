@@ -21,6 +21,7 @@ package com.islanddragon.johnny {
 		[Embed(source = '../../../../lib/original.actions', mimeType = 'application/octet-stream')]
 		protected var Actions:Class;
 		protected var actionsData:ByteArray = new Actions() as ByteArray;
+
 		protected var s:Stage;
 		protected var t:Timer;
 		protected var actors:Dictionary = new Dictionary();
@@ -31,7 +32,8 @@ package com.islanddragon.johnny {
 		protected var cyclesUpdate:int = 4;
 		protected var cycleLength:int = 20;
 		protected var assetsLoaded:Boolean = false;
-		protected var actions:Array = new Array();
+		protected var queuedScripts:Array = new Array();
+		protected var repeatedScripts:Array = new Array();
 		
 		protected var maskingShape:Shape;
 		public var holder:Sprite;
@@ -86,7 +88,7 @@ package com.islanddragon.johnny {
 		}
 		
 		public function update(e:Event):void {
-			handleActions();
+			handleQueuedScripts();
 			draw();
 		}
 		
@@ -99,18 +101,28 @@ package com.islanddragon.johnny {
 			}
 		}
 		
-		protected function handleActions():void {
-			for (var i:String in actions) {
-				var action:Action = actions[i];
+		protected function handleQueuedScripts():void {
+			for (var i:String in queuedScripts) {
+				if (queuedScripts[i].isDone()) {
+					if (repeatedScripts.indexOf(int(i)) !== -1) {
+						queuedScripts[i].reset();
+					} else {
+						delete queuedScripts[i];
+						continue;
+					}
+				}
+				
+				var action:Action = queuedScripts[i].getAction();
 				
 				if (action === null) {
-					return;
+					queuedScripts[i].next();
+					continue;
 				}
 
 				if (action.assetName === 'director') {
-					actions.shift();
 					handleDirectorAction(action);
-					return;
+					queuedScripts[i].next();
+					continue;
 				}
 				
 				var target:Prop = null;
@@ -122,17 +134,17 @@ package com.islanddragon.johnny {
 				}
 
 				if (target === null) {
-					actions.shift();
-					return;
+					queuedScripts[i].next();
+					continue;
 				}
 				
 				if (target.isBusy() === true) {
-					return;
+					continue;
 				}
 				
 				target.trigger(action.actionName, action.params, action.delay);
-				actions.shift();
-				return;
+				queuedScripts[i].next();
+				continue;
 			}
 		}
 
@@ -141,12 +153,17 @@ package com.islanddragon.johnny {
 		}
 		
 		public function runScript(params:Object):void {
-			var s:Script = scripts[params.script];
-			var acts:Array = s.update();
-			for (var i:String in acts) {
-				actions.push(acts[i]);
+			if (scripts.hasOwnProperty(params.script) == false) {
+				return;
 			}
-			handleActions();
+			
+			queuedScripts.push(scripts[params.script]);
+			
+			if (params.repeat !== true) {
+				return;
+			}
+			
+			repeatedScripts.push(queuedScripts.indexOf(scripts[params.script]));
 		}
 		
 		public function addActor(k:String, v:Actor):void {

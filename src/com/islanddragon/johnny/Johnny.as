@@ -9,13 +9,13 @@ package com.islanddragon.johnny
 			this.animations['idleLeft'] = {
 				'loop': true,
 				'flipped': true,
-				'sequence': [3,4]
+				'sequence': [3,3,3,4,4,4]
 			};
 			
 			this.animations['idleRight'] = {
 				'loop': true,
 				'flipped': false,
-				'sequence': [3,4]
+				'sequence': [3,3,3,4,4,4]
 			};
 
 			this.animations['walkBackLeft'] = {
