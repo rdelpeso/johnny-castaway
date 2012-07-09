@@ -17,9 +17,19 @@ package com.islanddragon.johnny {
 			reset();
 		}
 
-		public function getAction():Action {
+		public function getAction(rand:Boolean = false):Action {
+			var o:Object;
+			if (rand) {
+				var k:int = Math.round((Math.random() * (sParsed[0].length - 1)));
+				if (sParsed[0][k] !== null) {
+					o = sParsed[0][k];
+					return new Action(o.actionName, o.assetName, o.params, o.delay);
+				}
+				return null;
+			}
+			
 			if (key < sParsed[0].length) {
-				var o:Object = sParsed[0][key];
+				o = sParsed[0][key];
 				return new Action(o.actionName, o.assetName, o.params, o.delay);
 			}
 			return null;

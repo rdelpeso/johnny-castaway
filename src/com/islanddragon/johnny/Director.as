@@ -115,42 +115,43 @@ package com.islanddragon.johnny {
 					}
 				}
 				
-				var action:Action = queuedScripts[i].getAction();
-				
-				if (action === null) {
+				var res:Boolean = handleAction(queuedScripts[i].getAction());
+				if (res === true) {
 					queuedScripts[i].next();
-					continue;
 				}
-
-				if (action.assetName === 'director') {
-					handleDirectorAction(action);
-					queuedScripts[i].next();
-					continue;
-				}
-				
-				var target:Prop = null;
-				if (actors.hasOwnProperty(action.assetName) === true) {
-					target = actors[action.assetName];
-				}
-				if (props.hasOwnProperty(action.assetName) === true) {
-					target = props[action.assetName];
-				}
-
-				if (target === null) {
-					queuedScripts[i].next();
-					continue;
-				}
-				
-				if (target.isBusy() === true) {
-					continue;
-				}
-				
-				target.trigger(action.actionName, action.params, action.delay);
-				queuedScripts[i].next();
-				continue;
 			}
 		}
 
+		public function handleAction(action:Action):Boolean {
+			if (action === null) {
+				return true;
+			}
+
+			if (action.assetName === 'director') {
+				handleDirectorAction(action);
+				return true;
+			}
+			
+			var target:Prop = null;
+			if (actors.hasOwnProperty(action.assetName) === true) {
+				target = actors[action.assetName];
+			}
+			if (props.hasOwnProperty(action.assetName) === true) {
+				target = props[action.assetName];
+			}
+
+			if (target === null) {
+				return true;
+			}
+			
+			if (target.isBusy() === true) {
+				return false;
+			}
+			
+			target.trigger(action.actionName, action.params, action.delay);
+			return true;
+		}
+		
 		public function handleDirectorAction(a:Action):void {
 			this[a.actionName](a.params);
 		}
@@ -168,7 +169,14 @@ package com.islanddragon.johnny {
 			
 			repeatedScripts.push(queuedScripts.indexOf(scripts[params.script]));
 		}
-		
+
+		public function randomActionFromScript(params:Object):void {
+			if (scripts.hasOwnProperty(params.script) == false) {
+				return;
+			}
+			handleAction(scripts[params.script].getAction(true));
+		}
+
 		public function addActor(k:String, v:Actor):void {
 			if (actors.hasOwnProperty(k) === false) {
 				actors[k] = v;
