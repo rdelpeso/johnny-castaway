@@ -40,6 +40,7 @@ package com.islanddragon.johnny {
 
 		protected var assetsMap:Object = {
 			'Johnny': ['johnny'],
+			'Waves': ['waves'],
 			'Actor': ['cloud_1','cloud_2','wave']
 		};
 
@@ -61,6 +62,8 @@ package com.islanddragon.johnny {
 			maskingShape.graphics.beginFill(0xFFFFFF,1);
 			maskingShape.graphics.drawRect(0,0,512,384);
 			maskingShape.graphics.endFill();
+			
+			var mss:Sprite = new Sprite();
 			
 			holder.mask = maskingShape;
 			
@@ -263,6 +266,12 @@ package com.islanddragon.johnny {
 		protected function completedLoadJohnny(e:Event):void {
 			var l:CustomLoader = (e.target.loader as CustomLoader);
 			l.director.addActor(l.fileName[0], new Johnny(l.director, l.fileName[0], loadBm(e), l.fileName[1], l.fileName[2]));
+			depth++;
+		}
+
+		protected function completedLoadWaves(e:Event):void {
+			var l:CustomLoader = (e.target.loader as CustomLoader);
+			l.director.addActor(l.fileName[0], new Waves(l.director, l.fileName[0], loadBm(e), l.fileName[1], l.fileName[2]));
 			depth++;
 		}
 	

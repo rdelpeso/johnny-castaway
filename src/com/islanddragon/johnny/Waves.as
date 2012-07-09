@@ -1,30 +1,19 @@
 package com.islanddragon.johnny 
 {
 	import flash.display.Bitmap;
-	import flash.display.Sprite;
-	import flash.events.Event;
-	/**
-	 * ...
-	 * @author Raidel del Peso
-	 */
-	public class Waves extends Sprite
+	import flash.geom.Point;
+	public class Waves extends Actor
 	{
-		protected var w:Array;
-		protected var wave:Bitmap = new Bitmap();
-		
-		public function Waves() 
-		{
-			addChild(wave);
-		}
-		
-		public function addWave(wave:Bitmap):void {
-			if (w.indexOf(wave) === 0) {
-				w.push(wave);
-			}
-		}
-		
-		public function update(e:Event):void {
-			trace('update waves');
+		public function Waves(director:Director, name:String, b:Bitmap, w:int=0, h:int=0) {
+			super(director, name, b, w, h);
+			this.animations['idle'] = {
+				'loop': true,
+				'flipped': false,
+				'sequence': [0, 0, 1, 1, 2, 2, 1, 1]
+			};
+			
+			animatedState = 'idle';
+			prevAnimatedState = 'idle';
 		}
 	}
 

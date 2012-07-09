@@ -71,6 +71,8 @@ package com.islanddragon.johnny
 				'flipped': false,
 				'sequence': [33, 34, 35, 36]
 			};
+			//312.5 205
+
 		}
 		
 		public override function draw():void {
